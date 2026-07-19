@@ -2484,6 +2484,8 @@ try {
     }).then(function(){
       btn.disabled = false;
       authEmailDisplay.textContent = email;
+      authCodeInput.value = '';
+      authCodeError.style.display = 'none';
       document.getElementById('authStepEmail').style.display = 'none';
       document.getElementById('authStepCode').style.display = 'block';
       authCodeInput.focus();
@@ -2512,7 +2514,7 @@ try {
 
   document.getElementById('authVerifyBtn').addEventListener('click', function(){
     authCodeError.style.display = 'none';
-    var entered = authCodeInput.value.trim();
+    var entered = authCodeInput.value.replace(/\s+/g, '').trim();
     if (!entered) { showCodeError('Please enter the code.', 'សូមបញ្ចូលលេខកូដ។'); return; }
     if (entered !== pendingCode) { showCodeError('Incorrect code. Please try again.', 'លេខកូដមិនត្រឹមត្រូវ។ សូមសាកល្បងម្តងទៀត។'); return; }
     var isAdmin = adminEmails.some(function(e){ return e.toLowerCase() === pendingEmail; });
