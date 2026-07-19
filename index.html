@@ -1953,6 +1953,10 @@
       <p style="font-size:.82rem;margin-bottom:14px;"><span class="i18n" data-en="A 6-digit code was sent to" data-km="លេខកូដ ៦ខ្ទង់ត្រូវបានផ្ញើទៅ">A 6-digit code was sent to</span> <b id="authEmailDisplay"></b></p>
       <label class="rename-label"><span class="i18n" data-en="Verification Code" data-km="លេខកូដផ្ទៀងផ្ទាត់">Verification Code</span></label>
       <input type="text" id="authCodeInput" placeholder="123456" maxlength="6" inputmode="numeric" style="margin-bottom:16px;letter-spacing:6px;font-size:1.2rem;text-align:center;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-dim);margin-bottom:16px;cursor:pointer;">
+        <input type="checkbox" id="authRememberMe" checked style="width:auto;">
+        <span class="i18n" data-en="Remember me on this device" data-km="ចងចាំខ្ញុំនៅលើឧបករណ៍នេះ">Remember me on this device</span>
+      </label>
       <div class="auth-error" id="authCodeError" style="display:none;"></div>
       <div class="rename-actions">
         <button class="rename-cancel" id="authBackBtn"><span class="i18n" data-en="Back" data-km="ត្រឡប់">Back</span></button>
@@ -2517,6 +2521,14 @@ try {
       return;
     }
     currentUser = { email: pendingEmail, role: 'admin' };
+    if (document.getElementById('authRememberMe').checked) {
+      try {
+        localStorage.setItem('k2-admin-session', JSON.stringify({
+          email: pendingEmail,
+          expires: Date.now() + (30 * 24 * 60 * 60 * 1000) // 30 days
+        }));
+      } catch (e) {}
+    }
     updateHeaderForUser();
     authOverlay.classList.remove('open');
   });
@@ -2543,9 +2555,29 @@ try {
   });
   document.getElementById('logoutBtn').addEventListener('click', function(){
     currentUser = null;
+    try { localStorage.removeItem('k2-admin-session'); } catch (e) {}
     updateHeaderForUser();
     accountOverlay.classList.remove('open');
   });
+
+  // --- Restore remembered admin session on page load ---
+  (function restoreAdminSession(){
+    try {
+      var raw = localStorage.getItem('k2-admin-session');
+      if (!raw) return;
+      var session = JSON.parse(raw);
+      if (!session || !session.email || !session.expires || Date.now() > session.expires) {
+        localStorage.removeItem('k2-admin-session');
+        return;
+      }
+      if (adminEmails.some(function(e){ return e.toLowerCase() === session.email.toLowerCase(); })) {
+        currentUser = { email: session.email, role: 'admin' };
+        updateHeaderForUser();
+      } else {
+        localStorage.removeItem('k2-admin-session');
+      }
+    } catch (e) {}
+  })();
 
   // --- Manage Admin Emails (admin only) ---
   function renderUserList(){
