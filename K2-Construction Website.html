@@ -1765,29 +1765,29 @@
         <p class="eyebrow">របាយការណ៍</p>
         <h2 class="section-title">Project Dashboard</h2>
       </div>
-      <p>ទិដ្ឋភាពទូទៅនៃស្ថានភាពគម្រោង ថវិកា និងសុវត្ថិភាព (ទិន្នន័យគំរូ)</p>
+      <p>ទិដ្ឋភាពទូទៅនៃស្ថានភាពគម្រោង ថវិកា និងសុវត្ថិភាព (ទិន្នន័យផ្ទាល់ពី Gantt/Budget/HSE/Reports)</p>
     </div>
 
     <div class="dash-stats">
       <div class="dash-stat-card">
         <div class="dash-stat-label">Active Projects</div>
-        <div class="dash-stat-value">5</div>
-        <div class="dash-stat-sub up">↑ 2 since last quarter</div>
+        <div class="dash-stat-value" id="statActiveProjects">0</div>
+        <div class="dash-stat-sub" id="statActiveProjectsSub">Tracked in Budget/Reports</div>
       </div>
       <div class="dash-stat-card">
         <div class="dash-stat-label">Budget Used</div>
-        <div class="dash-stat-value">68%</div>
-        <div class="dash-stat-sub">$4.2M / $6.2M</div>
+        <div class="dash-stat-value" id="statBudgetUsed">0%</div>
+        <div class="dash-stat-sub" id="statBudgetUsedSub">$0 / $0</div>
       </div>
       <div class="dash-stat-card">
-        <div class="dash-stat-label">On-Time Rate</div>
-        <div class="dash-stat-value">87%</div>
-        <div class="dash-stat-sub up">↑ 4% vs last month</div>
+        <div class="dash-stat-label">Schedule Progress</div>
+        <div class="dash-stat-value" id="statScheduleProgress">0%</div>
+        <div class="dash-stat-sub" id="statScheduleProgressSub">Gantt tasks completed</div>
       </div>
       <div class="dash-stat-card">
         <div class="dash-stat-label">Safety Incidents</div>
-        <div class="dash-stat-value">0</div>
-        <div class="dash-stat-sub down">This month</div>
+        <div class="dash-stat-value" id="statSafetyIncidents">0</div>
+        <div class="dash-stat-sub" id="statSafetyIncidentsSub">Logged (HSE §6)</div>
       </div>
     </div>
 
@@ -2630,90 +2630,159 @@ try {
     }
   });
 
-  // --- Dashboard: charts + progress list (mock/sample data) ---
-  var dashProjects = [
-    { name: 'Classic Villa', budgeted: 1800, actual: 1650, progress: 82 },
-    { name: 'Modern Flat', budgeted: 1400, actual: 1120, progress: 65 },
-    { name: 'Warehouse 15000m2', budgeted: 2200, actual: 1980, progress: 91 },
-    { name: 'Metro Overpass', budgeted: 600, actual: 410, progress: 48 },
-    { name: 'Harbor Warehouse', budgeted: 200, actual: 95, progress: 30 }
-  ];
-
+  // --- Dashboard: charts + progress list (LIVE data from Gantt/Budget/HSE/Reports) ---
   function renderDashboard(){
+    // --- Aggregate live data from other sections (declared later in this script; safe to
+    //     reference here since this function only runs when called, after full script parses) ---
+    var liveBudgets = (typeof finBudgets !== 'undefined') ? finBudgets : [];
+    var liveIncidents = (typeof hseIncidents !== 'undefined') ? hseIncidents : [];
+    var liveGanttTasks = (typeof ganttTasks !== 'undefined') ? ganttTasks : [];
+    var liveWeekly = (typeof weeklyReports !== 'undefined') ? weeklyReports : [];
+
+    // Group budget entries by project name (a project may have several budget lines)
+    var budgetByProject = {};
+    liveBudgets.forEach(function(b){
+      var key = b.project || 'Unnamed';
+      if (!budgetByProject[key]) budgetByProject[key] = { name: key, budgeted: 0, actual: 0 };
+      budgetByProject[key].budgeted += b.budget;
+      budgetByProject[key].actual += b.actual;
+    });
+    var projectBudgetList = Object.keys(budgetByProject).map(function(k){ return budgetByProject[k]; });
+
+    // Latest weekly-report progress per project (most recently added wins)
+    var progressByProject = {};
+    liveWeekly.forEach(function(w){
+      progressByProject[w.project] = parseFloat(w.progress) || 0;
+    });
+
+    // Union of project names seen anywhere (Budget or Weekly Reports) = "Active Projects"
+    var activeProjectNames = {};
+    Object.keys(budgetByProject).forEach(function(k){ activeProjectNames[k] = true; });
+    Object.keys(progressByProject).forEach(function(k){ activeProjectNames[k] = true; });
+    var activeCount = Object.keys(activeProjectNames).length;
+
+    // --- Stat card 1: Active Projects ---
+    var statActiveEl = document.getElementById('statActiveProjects');
+    if (statActiveEl) statActiveEl.textContent = activeCount;
+
+    // --- Stat card 2: Budget Used ---
+    var totalBudget = projectBudgetList.reduce(function(s,p){ return s + p.budgeted; }, 0);
+    var totalActual = projectBudgetList.reduce(function(s,p){ return s + p.actual; }, 0);
+    var budgetPct = totalBudget > 0 ? Math.round((totalActual / totalBudget) * 100) : 0;
+    var statBudgetEl = document.getElementById('statBudgetUsed');
+    var statBudgetSubEl = document.getElementById('statBudgetUsedSub');
+    if (statBudgetEl) statBudgetEl.textContent = budgetPct + '%';
+    if (statBudgetSubEl) statBudgetSubEl.textContent = '$' + totalActual.toLocaleString() + 'k / $' + totalBudget.toLocaleString() + 'k';
+
+    // --- Stat card 3: Schedule Progress (% of Gantt tasks marked done) ---
+    var doneCount = liveGanttTasks.filter(function(t){ return t.status === 'done'; }).length;
+    var schedulePct = liveGanttTasks.length > 0 ? Math.round((doneCount / liveGanttTasks.length) * 100) : 0;
+    var statSchedEl = document.getElementById('statScheduleProgress');
+    var statSchedSubEl = document.getElementById('statScheduleProgressSub');
+    if (statSchedEl) statSchedEl.textContent = schedulePct + '%';
+    if (statSchedSubEl) statSchedSubEl.textContent = doneCount + ' / ' + liveGanttTasks.length + ' tasks done';
+
+    // --- Stat card 4: Safety Incidents ---
+    var statIncEl = document.getElementById('statSafetyIncidents');
+    var statIncSubEl = document.getElementById('statSafetyIncidentsSub');
+    if (statIncEl) statIncEl.textContent = liveIncidents.length;
+    if (statIncSubEl) {
+      var openCount = liveIncidents.filter(function(x){ return x.status === 'investigating'; }).length;
+      statIncSubEl.textContent = openCount + ' still under investigation';
+    }
+
     // Bar chart: Budgeted vs Actual, built with plain SVG (no external library needed)
     var budgetEl = document.getElementById('budgetChart');
     if (budgetEl) {
-      var maxVal = Math.max.apply(null, dashProjects.map(function(p){ return p.budgeted; })) * 1.1;
-      var barW = 20, gap = 14, groupGap = 26, chartH = 200, leftPad = 4;
-      var groupW = barW * 2 + gap;
-      var svgW = dashProjects.length * (groupW + groupGap) + leftPad;
-      var bars = '';
-      dashProjects.forEach(function(p, i){
-        var gx = leftPad + i * (groupW + groupGap);
-        var hB = (p.budgeted / maxVal) * chartH;
-        var hA = (p.actual / maxVal) * chartH;
-        var label = p.name.length > 12 ? p.name.slice(0,12) + '…' : p.name;
-        bars += '<rect x="'+gx+'" y="'+(chartH-hB)+'" width="'+barW+'" height="'+hB+'" fill="#3a3a3a" rx="2"/>';
-        bars += '<rect x="'+(gx+barW+4)+'" y="'+(chartH-hA)+'" width="'+barW+'" height="'+hA+'" fill="#e8621a" rx="2"/>';
-        bars += '<text x="'+(gx+groupW/2)+'" y="'+(chartH+18)+'" fill="#a8a8a4" font-size="9" text-anchor="middle">'+label+'</text>';
-      });
-      var legend = '<rect x="0" y="'+(chartH+34)+'" width="10" height="10" fill="#3a3a3a"/><text x="15" y="'+(chartH+43)+'" fill="#a8a8a4" font-size="10">Budgeted ($k)</text>'
-        + '<rect x="105" y="'+(chartH+34)+'" width="10" height="10" fill="#e8621a"/><text x="120" y="'+(chartH+43)+'" fill="#a8a8a4" font-size="10">Actual ($k)</text>';
-      budgetEl.innerHTML = '<svg viewBox="0 0 '+svgW+' '+(chartH+50)+'" style="width:100%;height:auto;" preserveAspectRatio="xMinYMid meet">'
-        + '<line x1="0" y1="'+chartH+'" x2="'+svgW+'" y2="'+chartH+'" stroke="#2b2b2b" stroke-width="1"/>'
-        + bars + legend + '</svg>';
+      if (projectBudgetList.length === 0) {
+        budgetEl.innerHTML = '<p style="color:var(--text-dim);font-size:.82rem;">មិនទាន់មានទិន្នន័យថវិកាទេ — បញ្ចូលតាម SOP §2 "ថវិកាគម្រោង"</p>';
+      } else {
+        var maxVal = Math.max.apply(null, projectBudgetList.map(function(p){ return Math.max(p.budgeted, p.actual); })) * 1.1 || 1;
+        var barW = 20, gap = 14, groupGap = 26, chartH = 200, leftPad = 4;
+        var groupW = barW * 2 + gap;
+        var svgW = projectBudgetList.length * (groupW + groupGap) + leftPad;
+        var bars = '';
+        projectBudgetList.forEach(function(p, i){
+          var gx = leftPad + i * (groupW + groupGap);
+          var hB = (p.budgeted / maxVal) * chartH;
+          var hA = (p.actual / maxVal) * chartH;
+          var label = p.name.length > 12 ? p.name.slice(0,12) + '…' : p.name;
+          bars += '<rect x="'+gx+'" y="'+(chartH-hB)+'" width="'+barW+'" height="'+hB+'" fill="#3a3a3a" rx="2"/>';
+          bars += '<rect x="'+(gx+barW+4)+'" y="'+(chartH-hA)+'" width="'+barW+'" height="'+hA+'" fill="#e8621a" rx="2"/>';
+          bars += '<text x="'+(gx+groupW/2)+'" y="'+(chartH+18)+'" fill="#a8a8a4" font-size="9" text-anchor="middle">'+label+'</text>';
+        });
+        var legend = '<rect x="0" y="'+(chartH+34)+'" width="10" height="10" fill="#3a3a3a"/><text x="15" y="'+(chartH+43)+'" fill="#a8a8a4" font-size="10">Budgeted ($k)</text>'
+          + '<rect x="105" y="'+(chartH+34)+'" width="10" height="10" fill="#e8621a"/><text x="120" y="'+(chartH+43)+'" fill="#a8a8a4" font-size="10">Actual ($k)</text>';
+        budgetEl.innerHTML = '<svg viewBox="0 0 '+svgW+' '+(chartH+50)+'" style="width:100%;height:auto;" preserveAspectRatio="xMinYMid meet">'
+          + '<line x1="0" y1="'+chartH+'" x2="'+svgW+'" y2="'+chartH+'" stroke="#2b2b2b" stroke-width="1"/>'
+          + bars + legend + '</svg>';
+      }
     }
 
-    // Doughnut chart: Project status breakdown, built with plain SVG
+    // Doughnut chart: Project status, derived from latest weekly-report progress %
+    // Heuristic: >=90% Completed, 60-89% On Track, 30-59% At Risk, <30% Delayed
     var statusEl = document.getElementById('statusChart');
     if (statusEl) {
-      var statusData = [
-        { label: 'On Track', value: 2, color: '#e8621a' },
-        { label: 'At Risk', value: 1, color: '#e0b23a' },
-        { label: 'Delayed', value: 1, color: '#c94f0f' },
-        { label: 'Completed', value: 1, color: '#4ade80' }
-      ];
-      var total = statusData.reduce(function(s,d){ return s + d.value; }, 0);
-      var cx = 90, cy = 90, r = 70, innerR = 42;
-      var startAngle = -90;
-      var arcs = '';
-      statusData.forEach(function(d){
-        var angle = (d.value / total) * 360;
-        var endAngle = startAngle + angle;
-        var toRad = function(a){ return (a * Math.PI) / 180; };
-        var x1 = cx + r * Math.cos(toRad(startAngle));
-        var y1 = cy + r * Math.sin(toRad(startAngle));
-        var x2 = cx + r * Math.cos(toRad(endAngle));
-        var y2 = cy + r * Math.sin(toRad(endAngle));
-        var ix1 = cx + innerR * Math.cos(toRad(startAngle));
-        var iy1 = cy + innerR * Math.sin(toRad(startAngle));
-        var ix2 = cx + innerR * Math.cos(toRad(endAngle));
-        var iy2 = cy + innerR * Math.sin(toRad(endAngle));
-        var largeArc = angle > 180 ? 1 : 0;
-        var path = 'M'+x1+','+y1+' A'+r+','+r+' 0 '+largeArc+' 1 '+x2+','+y2+' L'+ix2+','+iy2+' A'+innerR+','+innerR+' 0 '+largeArc+' 0 '+ix1+','+iy1+' Z';
-        arcs += '<path d="'+path+'" fill="'+d.color+'" stroke="#111111" stroke-width="2"/>';
-        startAngle = endAngle;
+      var buckets = { 'Completed': 0, 'On Track': 0, 'At Risk': 0, 'Delayed': 0 };
+      Object.keys(progressByProject).forEach(function(name){
+        var pct = progressByProject[name];
+        if (pct >= 90) buckets['Completed']++;
+        else if (pct >= 60) buckets['On Track']++;
+        else if (pct >= 30) buckets['At Risk']++;
+        else buckets['Delayed']++;
       });
-      var legendItems = statusData.map(function(d, i){
-        return '<div style="display:flex;align-items:center;gap:6px;font-size:.76rem;color:var(--text-dim);"><span style="width:10px;height:10px;border-radius:2px;background:'+d.color+';display:inline-block;"></span>'+d.label+' ('+d.value+')</div>';
-      }).join('');
-      statusEl.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:16px;">'
-        + '<svg viewBox="0 0 180 180" style="width:180px;height:180px;">'+arcs+'</svg>'
-        + '<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">'+legendItems+'</div>'
-        + '</div>';
+      var statusColors = { 'On Track': '#e8621a', 'At Risk': '#e0b23a', 'Delayed': '#c94f0f', 'Completed': '#4ade80' };
+      var statusData = Object.keys(buckets).map(function(k){ return { label: k, value: buckets[k], color: statusColors[k] }; }).filter(function(d){ return d.value > 0; });
+      var total = statusData.reduce(function(s,d){ return s + d.value; }, 0);
+      if (total === 0) {
+        statusEl.innerHTML = '<p style="color:var(--text-dim);font-size:.82rem;">មិនទាន់មានទិន្នន័យវឌ្ឍនភាពទេ — បញ្ចូលតាម SOP §11 "របាយការណ៍ប្រចាំសប្តាហ៍"</p>';
+      } else {
+        var cx = 90, cy = 90, r = 70, innerR = 42;
+        var startAngle = -90;
+        var arcs = '';
+        statusData.forEach(function(d){
+          var angle = (d.value / total) * 360;
+          var endAngle = startAngle + angle;
+          var toRad = function(a){ return (a * Math.PI) / 180; };
+          var x1 = cx + r * Math.cos(toRad(startAngle));
+          var y1 = cy + r * Math.sin(toRad(startAngle));
+          var x2 = cx + r * Math.cos(toRad(endAngle));
+          var y2 = cy + r * Math.sin(toRad(endAngle));
+          var ix1 = cx + innerR * Math.cos(toRad(startAngle));
+          var iy1 = cy + innerR * Math.sin(toRad(startAngle));
+          var ix2 = cx + innerR * Math.cos(toRad(endAngle));
+          var iy2 = cy + innerR * Math.sin(toRad(endAngle));
+          var largeArc = angle > 180 ? 1 : 0;
+          var path = 'M'+x1+','+y1+' A'+r+','+r+' 0 '+largeArc+' 1 '+x2+','+y2+' L'+ix2+','+iy2+' A'+innerR+','+innerR+' 0 '+largeArc+' 0 '+ix1+','+iy1+' Z';
+          arcs += '<path d="'+path+'" fill="'+d.color+'" stroke="#111111" stroke-width="2"/>';
+          startAngle = endAngle;
+        });
+        var legendItems = statusData.map(function(d){
+          return '<div style="display:flex;align-items:center;gap:6px;font-size:.76rem;color:var(--text-dim);"><span style="width:10px;height:10px;border-radius:2px;background:'+d.color+';display:inline-block;"></span>'+d.label+' ('+d.value+')</div>';
+        }).join('');
+        statusEl.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:16px;">'
+          + '<svg viewBox="0 0 180 180" style="width:180px;height:180px;">'+arcs+'</svg>'
+          + '<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">'+legendItems+'</div>'
+          + '</div>';
+      }
     }
 
     var progressList = document.getElementById('progressList');
     if (progressList) {
-      progressList.innerHTML = dashProjects.map(function(p){
-        return '<div class="dash-progress-row">'
-          + '<div class="top"><span class="pname">'+p.name+'</span><span class="pct">'+p.progress+'%</span></div>'
-          + '<div class="dash-progress-track"><div class="dash-progress-fill" style="width:'+p.progress+'%;"></div></div>'
-          + '</div>';
-      }).join('');
+      var names = Object.keys(progressByProject);
+      if (names.length === 0) {
+        progressList.innerHTML = '<p style="color:var(--text-dim);font-size:.82rem;">មិនទាន់មានទិន្នន័យទេ — បញ្ចូលតាម SOP §11 "របាយការណ៍ប្រចាំសប្តាហ៍"</p>';
+      } else {
+        progressList.innerHTML = names.map(function(name){
+          var pct = progressByProject[name];
+          return '<div class="dash-progress-row">'
+            + '<div class="top"><span class="pname">'+name+'</span><span class="pct">'+pct+'%</span></div>'
+            + '<div class="dash-progress-track"><div class="dash-progress-fill" style="width:'+pct+'%;"></div></div>'
+            + '</div>';
+        }).join('');
+      }
     }
   }
-  renderDashboard();
 
   // --- Org Chart: edit name/role/photo per node ---
   var orgEditOverlay = document.getElementById('orgEditOverlay');
@@ -2984,6 +3053,7 @@ try {
         resource: document.getElementById('wrResourceInput').value.trim() || '—'
       });
       renderWrList();
+      renderDashboard();
       document.getElementById('wrProjectInput').value = '';
       document.getElementById('wrDateInput').value = '';
       document.getElementById('wrProgressInput').value = '';
@@ -2999,6 +3069,7 @@ try {
       var id = parseInt(btn.getAttribute('data-idx'), 10);
       weeklyReports = weeklyReports.filter(function(x){ return x.id !== id; });
       renderWrList();
+      renderDashboard();
     });
   }
 
@@ -3437,6 +3508,7 @@ try {
         action: document.getElementById('hseIncActionInput').value.trim() || '—'
       });
       renderHseIncList();
+      renderDashboard();
       document.getElementById('hseIncDateInput').value = '';
       document.getElementById('hseIncVictimInput').value = '';
       document.getElementById('hseIncDescInput').value = '';
@@ -3456,6 +3528,7 @@ try {
         hseIncidents = hseIncidents.filter(function(it){ return it.id !== id; });
       }
       renderHseIncList();
+      renderDashboard();
     });
   }
 
@@ -3553,6 +3626,7 @@ try {
         actual: parseFloat(document.getElementById('finActualInput').value) || 0
       });
       renderFinBudgetList();
+      renderDashboard();
       document.getElementById('finProjectInput').value = '';
       document.getElementById('finBudgetInput').value = '';
       document.getElementById('finActualInput').value = '';
@@ -3706,6 +3780,7 @@ try {
         if (idx > -1) arr.splice(idx, 1);
       }
       render();
+      if (listName === 'finBudgets') renderDashboard();
     });
   }
 
@@ -4055,6 +4130,7 @@ try {
       var id = parseInt(btn.getAttribute('data-id'), 10);
       ganttTasks = ganttTasks.filter(function(t){ return t.id !== id; });
       renderGanttChart();
+      renderDashboard();
     });
   }
 
@@ -4076,6 +4152,7 @@ try {
       ganttTaskCounter += 1;
       ganttTasks.push({ id: ganttTaskCounter, discipline: ganttDisciplineInput.value, name: name, start: start, end: end, status: ganttStatusInput.value });
       renderGanttChart();
+      renderDashboard();
       ganttTaskNameInput.value = ''; ganttStartInput.value = ''; ganttEndInput.value = '';
     });
   }
@@ -4540,6 +4617,9 @@ try {
       refFileInputEl.value = '';
     });
   }
+
+  // --- Initial Dashboard render (now that Gantt/Budget/HSE/Reports data all exist) ---
+  renderDashboard();
 
   // --- Load saved site settings (brand + display prefs) on page start ---
   loadSiteSettings();
