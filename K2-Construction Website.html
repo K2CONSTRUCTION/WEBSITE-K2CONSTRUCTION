@@ -32,12 +32,7 @@
   body:not(.admin-mode) .user-row-actions,
   body:not(.admin-mode) #manageUsersBtn,
   body:not(.admin-mode) .sop-subtitle + .doc-form,
-  body:not(.admin-mode) #ganttAddBtn,
-  body:not(.admin-mode) #ganttTaskNameInput,
-  body:not(.admin-mode) #ganttStartInput,
-  body:not(.admin-mode) #ganttEndInput,
-  body:not(.admin-mode) #ganttStatusInput,
-  body:not(.admin-mode) #ganttDisciplineInput{
+  body:not(.admin-mode) .gantt-admin-form{
     display:none !important;
   }
   .admin-badge{display:none;background:var(--orange);color:#fff;font-size:.62rem;font-weight:800;text-transform:uppercase;padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:middle;}
@@ -1086,7 +1081,7 @@
               <span><span class="dot" style="background:#3a3a3a;"></span> មិនទាន់ចាប់ផ្តើម</span>
             </div>
 
-            <div style="border-top:1px solid var(--line);margin-top:18px;padding-top:16px;">
+            <div class="gantt-admin-form" style="border-top:1px solid var(--line);margin-top:18px;padding-top:16px;">
               <label class="rename-label">បន្ថែមកិច្ចការថ្មី (Add Task)</label>
               <label class="rename-label">ផ្នែក (Discipline)</label>
               <select id="ganttDisciplineInput" style="margin-bottom:12px;">
