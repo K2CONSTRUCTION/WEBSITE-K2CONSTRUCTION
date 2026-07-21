@@ -1977,6 +1977,23 @@
 
     <!-- Rebar Calculator -->
     <div class="miniapp-panel active" id="miniapp-rebar">
+      <div class="doc-form" style="margin-bottom:16px;">
+        <label class="rename-label">ព័ត៌មានគម្រោង (Project Info)</label>
+        <div class="miniapp-grid">
+          <div class="miniapp-field">
+            <label>ប្រភេទគម្រោង (Category)</label>
+            <div style="display:flex;gap:8px;">
+              <select id="rebarProjCategory" style="flex:1;"></select>
+              <button type="button" id="rebarProjCategoryAddBtn" class="outline" style="flex-shrink:0;padding:0 14px;">+</button>
+            </div>
+          </div>
+          <div class="miniapp-field"><label>ឈ្មោះគម្រោង (Project Name)</label><input type="text" id="rebarProjName" placeholder="ឧ. Borey Sunshine A1"></div>
+          <div class="miniapp-field"><label>លេខកូដគម្រោង (Project Code)</label><input type="text" id="rebarProjCode" placeholder="ឧ. PRJ-2026-001"></div>
+          <div class="miniapp-field"><label>ទីតាំង (Location)</label><input type="text" id="rebarProjLocation" placeholder="ឧ. ភ្នំពេញ"></div>
+          <div class="miniapp-field"><label>ម្ចាស់គម្រោង (Owner Name)</label><input type="text" id="rebarProjOwner" placeholder="ឈ្មោះម្ចាស់គម្រោង"></div>
+        </div>
+      </div>
+
       <div class="miniapp-nav" id="rebarSubNav" style="margin-bottom:16px;">
         <button type="button" class="miniapp-nav-btn active" data-rtab="number">Number</button>
         <button type="button" class="miniapp-nav-btn" data-rtab="weight">Weight</button>
@@ -5599,6 +5616,52 @@ try {
 
     function unitWeight(d){ return (d*d)/162; } // kg/m
     function barArea(d){ return Math.PI/4 * Math.pow(d/10,2); } // cm2, d in mm
+
+    // -- Rebar Calculator: Project Info (category, name, code, location, owner) --
+    var PROJ_CATS_KEY = 'k2-miniapp-rebar-categories';
+    var PROJ_INFO_KEY = 'k2-miniapp-rebar-project';
+    var DEFAULT_PROJ_CATEGORIES = ['Warehouse', 'Market', 'Shop', 'Villa', 'Flat'];
+    var projCategories = load(PROJ_CATS_KEY, DEFAULT_PROJ_CATEGORIES.slice());
+    var projInfo = load(PROJ_INFO_KEY, {category: DEFAULT_PROJ_CATEGORIES[0], name: '', code: '', location: '', owner: ''});
+    var projCategorySelect = document.getElementById('rebarProjCategory');
+    function renderProjCategories(){
+      if (!projCategorySelect) return;
+      projCategorySelect.innerHTML = projCategories.map(function(c){
+        return '<option value="' + c + '"' + (c === projInfo.category ? ' selected' : '') + '>' + c + '</option>';
+      }).join('');
+    }
+    function saveProjInfo(){
+      projInfo.category = projCategorySelect ? projCategorySelect.value : projInfo.category;
+      projInfo.name = document.getElementById('rebarProjName').value;
+      projInfo.code = document.getElementById('rebarProjCode').value;
+      projInfo.location = document.getElementById('rebarProjLocation').value;
+      projInfo.owner = document.getElementById('rebarProjOwner').value;
+      save(PROJ_INFO_KEY, projInfo);
+    }
+    renderProjCategories();
+    document.getElementById('rebarProjName').value = projInfo.name || '';
+    document.getElementById('rebarProjCode').value = projInfo.code || '';
+    document.getElementById('rebarProjLocation').value = projInfo.location || '';
+    document.getElementById('rebarProjOwner').value = projInfo.owner || '';
+    ['rebarProjCategory','rebarProjName','rebarProjCode','rebarProjLocation','rebarProjOwner'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('change', saveProjInfo);
+      if (el && el.tagName === 'INPUT') el.addEventListener('input', saveProjInfo);
+    });
+    var rebarProjCategoryAddBtn = document.getElementById('rebarProjCategoryAddBtn');
+    if (rebarProjCategoryAddBtn) rebarProjCategoryAddBtn.addEventListener('click', function(){
+      var newCat = prompt('បញ្ចូលប្រភេទគម្រោងថ្មី (ឧ. Hospital, School)');
+      if (!newCat) return;
+      newCat = newCat.trim();
+      if (!newCat) return;
+      if (projCategories.indexOf(newCat) === -1) {
+        projCategories.push(newCat);
+        save(PROJ_CATS_KEY, projCategories);
+      }
+      projInfo.category = newCat;
+      renderProjCategories();
+      saveProjInfo();
+    });
 
     // -- Rebar sub-tab switching --
     var rebarSubBtns = document.querySelectorAll('#rebarSubNav .miniapp-nav-btn');
