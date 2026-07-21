@@ -4569,7 +4569,9 @@ try {
       showMemberLoginError('សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែលត្រឹមត្រូវ។');
       return;
     }
-    if (!members.some(function(m){ return m.email === email; })) {
+    var isKnownMember = members.some(function(m){ return m.email === email; });
+    var isKnownAdmin = adminEmails.some(function(e){ return e.toLowerCase() === email; });
+    if (!isKnownMember && !isKnownAdmin) {
       showMemberLoginError('រកមិនឃើញអ៊ីមែលនេះក្នុងបញ្ជីសមាជិកទេ។ សូមចុះឈ្មោះជាមុនសិន។');
       return;
     }
@@ -4605,6 +4607,17 @@ try {
         expires: Date.now() + (30 * 24 * 60 * 60 * 1000)
       }));
     } catch (e) {}
+    // If this email is also an approved admin email, log them in as Admin too
+    if (adminEmails.some(function(e){ return e.toLowerCase() === email; })) {
+      currentUser = { email: email, role: 'admin' };
+      try {
+        localStorage.setItem('k2-admin-session', JSON.stringify({
+          email: email,
+          expires: Date.now() + (30 * 24 * 60 * 60 * 1000)
+        }));
+      } catch (e) {}
+      updateHeaderForUser();
+    }
     clearPreviewTimer();
     document.getElementById('previewLockOverlay').classList.remove('open');
     document.getElementById('previewTimerBadge').style.display = 'none';
