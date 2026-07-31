@@ -1,0 +1,78 @@
+/* ===== K2 Smart Invoice — Visual Polish Layer ===== */
+/* This file only adds visual refinement (fonts, shadows, spacing, motion).
+   It never changes app logic and is safe to load alongside the compiled bundle. */
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+html, body, #root {
+  font-family: 'Inter', 'Noto Sans Khmer', ui-sans-serif, system-ui, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Softer, richer shadows everywhere Tailwind already applies shadow-lg/shadow-2xl */
+.shadow-lg {
+  box-shadow: 0 8px 24px -6px rgba(15, 23, 42, 0.12), 0 2px 6px -2px rgba(15, 23, 42, 0.08) !important;
+}
+.shadow-2xl {
+  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.25), 0 8px 16px -8px rgba(15, 23, 42, 0.12) !important;
+}
+
+/* Rounded cards feel more premium with a hairline border + smoother corners */
+.rounded-2xl, .rounded-xl, .rounded-\[36px\], .rounded-\[46px\] {
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+/* Buttons and tappable elements: subtle lift + press feedback */
+button, [role="button"] {
+  transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease, background-color .15s ease !important;
+}
+button:hover, [role="button"]:hover {
+  filter: brightness(1.03);
+}
+button:active, [role="button"]:active {
+  transform: scale(0.97);
+}
+
+/* Icon grid tiles (home screen shortcuts) — gentle hover lift and cleaner shadow */
+.grid > .rounded-2xl.bg-white,
+.grid > .bg-white.rounded-2xl,
+.grid .aspect-square {
+  transition: transform .15s ease, box-shadow .15s ease !important;
+}
+.grid > .rounded-2xl.bg-white:hover,
+.grid > .bg-white.rounded-2xl:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -8px rgba(15, 23, 42, 0.15) !important;
+}
+
+/* Inputs: cleaner focus ring and slightly larger touch targets */
+input, select, textarea {
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(34, 139, 87, 0.18) !important;
+}
+
+/* Bottom camera / floating action button — richer depth so it reads as primary action */
+.rounded-full.bg-\[\#23272b\],
+.rounded-full.bg-black {
+  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Scrollbars (desktop / iPad) look tidier */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, 0.18); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(15, 23, 42, 0.3); }
+
+/* Tables/lists: clearer row separation without feeling heavy */
+.divide-y > * + *,
+.border-b {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Text legibility tweaks for Khmer script at small sizes */
+.text-xs { letter-spacing: 0; }
+.font-bold, .font-semibold { letter-spacing: -0.01em; }
