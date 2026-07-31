@@ -76,3 +76,64 @@ input:focus, select:focus, textarea:focus {
 /* Text legibility tweaks for Khmer script at small sizes */
 .text-xs { letter-spacing: 0; }
 .font-bold, .font-semibold { letter-spacing: -0.01em; }
+
+/* ===== Dashboard tabs polish (ធម្មតា / វិភាគទិន្នន័យ / ម៉ែត្រការលក់ / KPI ជំនួយ) ===== */
+
+/* Big stat numbers read as the hero of each card — tighter, tabular, slightly larger */
+.text-2xl, .text-3xl, .text-4xl {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  font-weight: 700 !important;
+}
+
+/* Card headings inside dashboards (small caps-style labels above numbers) */
+h1, h2, h3, h4 {
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+/* More breathing room between stacked dashboard cards */
+.space-y-3 > * + *, .space-y-4 > * + * {
+  margin-top: 1.1rem !important;
+}
+.grid.gap-3, .grid.gap-4 {
+  gap: 1rem !important;
+}
+
+/* Rounded metric/gauge/pie chart cards: consistent inner padding + soft glow instead of flat fill */
+.rounded-2xl, .rounded-xl {
+  padding-top: 1.1rem;
+  padding-bottom: 1.1rem;
+}
+
+/* Dark-theme dashboards (វិភាគទិន្នន័យ, ម៉ែត្រការលក់, KPI) — richer depth so charts pop off the background */
+[class*="bg-[#0"], [class*="bg-[#1"], [class*="bg-[#2"], [class*="bg-slate-9"], [class*="bg-gray-9"], [class*="bg-slate-8"] {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 12px 28px -10px rgba(0,0,0,0.55) !important;
+}
+
+/* Small percentage / trend badges (e.g. 50%, 67.76%, ▼-2:09hr) — clearer pill shape */
+.rounded-full.px-2, .rounded-full.px-2\.5, .rounded-full.py-0\.5 {
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+/* Legend dots + labels (Cat 1/2/3, Promoters/Passives/Detractors rows) get a touch more spacing */
+.flex.items-center.gap-2, .flex.items-center.gap-1\.5 {
+  padding-top: .15rem;
+  padding-bottom: .15rem;
+}
+
+/* Segmented tab bar (ធម្មតា / វិភាគទិន្នន័យ / ម៉ែត្រការលក់ / KPI ជំនួយ) — clearer active state */
+.border-2 {
+  border-width: 1.5px !important;
+}
+
+/* Chart canvases/SVGs: rounded corners so bars/funnels don't look clipped against card edges */
+svg, canvas {
+  border-radius: 6px;
+}
+
+/* Consistent section spacing at the very top of each dashboard view */
+.p-4:first-child, .p-5:first-child, .p-6:first-child {
+  padding-top: 1.5rem;
+}
