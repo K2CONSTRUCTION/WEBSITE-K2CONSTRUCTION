@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Tools</title>
+<style>
+  :root{
+    --bg:#111111;
+    --card:#1e1e1e;
+    --card-soft:#181818;
+    --orange:#e8621a;
+    --orange-dark:#c94f0f;
+    --text:#f5f5f3;
+    --text-dim:#a8a8a4;
+    --line:#2b2b2b;
+    --font-display:'Anton','Arial Narrow',sans-serif;
+    --font-body:'Inter',-apple-system,sans-serif;
+    --pdf:#e0574a;
+    --word:#4a7de0;
+    --excel:#3aa66a;
+    --ppt:#d99a3a;
+    --img:#9a6cd0;
+    --xml:#c9a23c;
+    --sign:#c0507a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    line-height:1.5;
+    padding:18px 14px 40px;
+  }
+  .intro{margin-bottom:18px;}
+  .intro .eyebrow{
+    color:var(--orange);text-transform:uppercase;letter-spacing:.14em;
+    font-weight:700;font-size:.7rem;margin-bottom:6px;display:block;
+  }
+  .intro h2{
+    font-family:var(--font-display);font-weight:400;
+    font-size:1.35rem;letter-spacing:.01em;margin-bottom:6px;
+  }
+  .intro p{color:var(--text-dim);font-size:.84rem;max-width:560px;}
+
+  .quick-row{display:flex;gap:8px;overflow-x:auto;padding:14px 0 4px;scrollbar-width:none;}
+  .quick-row::-webkit-scrollbar{display:none;}
+  .chip{
+    flex:0 0 auto;display:flex;align-items:center;gap:7px;
+    background:var(--card);border:1px solid var(--line);color:var(--text-dim);
+    font-size:.74rem;font-weight:600;padding:8px 13px;border-radius:20px;white-space:nowrap;
+  }
+  .chip .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+
+  .section{margin-top:24px;}
+  .section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;}
+  .section-title{font-size:.9rem;font-weight:700;display:flex;align-items:center;gap:8px;}
+  .section-title .bar{width:4px;height:14px;border-radius:2px;display:inline-block;}
+  .section-sub{font-size:.65rem;color:var(--text-dim);letter-spacing:.06em;}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  @media (min-width:460px){.grid{grid-template-columns:repeat(4,1fr);}}
+  @media (min-width:640px){.grid{grid-template-columns:repeat(6,1fr);}}
+
+  .tool{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:14px 6px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;
+    cursor:pointer;transition:.15s;
+  }
+  .tool:hover{border-color:var(--orange);transform:translateY(-2px);}
+  .tool:active{transform:scale(.95);}
+  .icon-wrap{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;}
+  .icon-wrap svg{width:21px;height:21px;}
+  .tool-label{font-size:.72rem;font-weight:700;color:var(--text);text-align:center;line-height:1.35;}
+  .tool-label-en{font-size:.62rem;color:var(--text-dim);text-align:center;margin-top:-3px;}
+
+  .bg-pdf{background:rgba(224,87,74,.14);color:var(--pdf);}
+  .bg-word{background:rgba(74,125,224,.14);color:var(--word);}
+  .bg-excel{background:rgba(58,166,106,.14);color:var(--excel);}
+  .bg-ppt{background:rgba(217,154,58,.14);color:var(--ppt);}
+  .bg-img{background:rgba(154,108,208,.14);color:var(--img);}
+  .bg-xml{background:rgba(201,162,60,.14);color:var(--xml);}
+  .bg-sign{background:rgba(192,80,122,.14);color:var(--sign);}
+
+  .demo-note{
+    margin-top:22px;padding:14px 16px;border-radius:10px;
+    background:rgba(232,98,26,.08);border:1px dashed rgba(232,98,26,.4);
+    font-size:.76rem;color:var(--text-dim);line-height:1.7;
+  }
+  .demo-note b{color:var(--orange);}
+
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;z-index:50;}
+  .overlay.open{display:flex;}
+  .sheet{background:var(--card);width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:20px 18px 26px;border:1px solid var(--line);border-bottom:none;animation:up .2s ease;}
+  @keyframes up{from{transform:translateY(24px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .sheet-handle{width:34px;height:4px;background:var(--line);border-radius:99px;margin:0 auto 14px;}
+  .sheet-title{font-weight:700;font-size:.95rem;text-align:center;margin-bottom:2px;}
+  .sheet-sub{font-size:.7rem;color:var(--text-dim);text-align:center;margin-bottom:18px;}
+  .drop{border:1.5px dashed var(--line);border-radius:12px;padding:24px 14px;text-align:center;background:var(--card-soft);}
+  .drop-btn{font-weight:700;font-size:.82rem;color:#fff;border:none;border-radius:10px;padding:12px 20px;cursor:pointer;margin-top:14px;}
+  .sheet-close{display:block;margin:14px auto 0;background:none;border:none;font-size:.72rem;color:var(--text-dim);text-decoration:underline;cursor:pointer;}
+</style>
+</head>
+<body>
+
+  <div class="intro">
+    <span class="eyebrow">K2 Smart Tools</span>
+    <h2>PDF Tools</h2>
+    <p>កែសម្រួល បម្លែង និងគ្រប់គ្រងឯកសារការងារដោយផ្ទាល់ — គាំទ្រពេញលេញអក្សរខ្មែរ Unicode &amp; Limon</p>
+  </div>
+
+  <div class="quick-row">
+    <div class="chip"><span class="dot" style="background:var(--pdf)"></span>PDF ទៅ Word</div>
+    <div class="chip"><span class="dot" style="background:var(--orange)"></span>បញ្ចូល PDF</div>
+    <div class="chip"><span class="dot" style="background:var(--sign)"></span>ចុះហត្ថលេខា</div>
+    <div class="chip"><span class="dot" style="background:var(--img)"></span>JPG ទៅ PDF</div>
+    <div class="chip"><span class="dot" style="background:var(--xml)"></span>បង្រួម PDF</div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title"><span class="bar" style="background:var(--pdf)"></span>បម្លែងចេញពី PDF</div>
+      <div class="section-sub">FROM PDF</div>
+    </div>
+    <div class="grid">
+      <div class="tool" data-tool="PDF to Word" data-c="word"><div class="icon-wrap bg-word">I_DOC</div><div class="tool-label">PDF ទៅ Word</div><div class="tool-label-en">PDF → DOCX</div></div>
+      <div class="tool" data-tool="PDF to Excel" data-c="excel"><div class="icon-wrap bg-excel">I_DOC</div><div class="tool-label">PDF ទៅ Excel</div><div class="tool-label-en">PDF → XLSX</div></div>
+      <div class="tool" data-tool="PDF to PPT" data-c="ppt"><div class="icon-wrap bg-ppt">I_DOC</div><div class="tool-label">PDF ទៅ PPT</div><div class="tool-label-en">PDF → PPTX</div></div>
+      <div class="tool" data-tool="PDF to JPG" data-c="img"><div class="icon-wrap bg-img">I_IMG</div><div class="tool-label">PDF ទៅ JPG</div><div class="tool-label-en">PDF → JPG</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title"><span class="bar" style="background:var(--orange)"></span>បម្លែងទៅ PDF</div>
+      <div class="section-sub">TO PDF</div>
+    </div>
+    <div class="grid">
+      <div class="tool" data-tool="Word to PDF" data-c="pdf"><div class="icon-wrap bg-pdf">I_DOC</div><div class="tool-label">Word ទៅ PDF</div><div class="tool-label-en">DOCX → PDF</div></div>
+      <div class="tool" data-tool="Excel to PDF" data-c="pdf"><div class="icon-wrap bg-pdf">I_DOC</div><div class="tool-label">Excel ទៅ PDF</div><div class="tool-label-en">XLSX → PDF</div></div>
+      <div class="tool" data-tool="PPT to PDF" data-c="pdf"><div class="icon-wrap bg-pdf">I_DOC</div><div class="tool-label">PPT ទៅ PDF</div><div class="tool-label-en">PPTX → PDF</div></div>
+      <div class="tool" data-tool="JPG to PDF" data-c="pdf"><div class="icon-wrap bg-pdf">I_DOC</div><div class="tool-label">JPG ទៅ PDF</div><div class="tool-label-en">JPG → PDF</div></div>
+      <div class="tool" data-tool="XML to PDF" data-c="pdf"><div class="icon-wrap bg-pdf">I_DOC</div><div class="tool-label">XML ទៅ PDF</div><div class="tool-label-en">XML → PDF</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title"><span class="bar" style="background:var(--xml)"></span>រៀបចំ &amp; គ្រប់គ្រង</div>
+      <div class="section-sub">ORGANIZE</div>
+    </div>
+    <div class="grid">
+      <div class="tool" data-tool="Merge PDF" data-c="xml"><div class="icon-wrap bg-xml">I_MERGE</div><div class="tool-label">បញ្ចូល PDF</div><div class="tool-label-en">MERGE</div></div>
+      <div class="tool" data-tool="Split PDF" data-c="xml"><div class="icon-wrap bg-xml">I_SPLIT</div><div class="tool-label">ញែក PDF</div><div class="tool-label-en">SPLIT</div></div>
+      <div class="tool" data-tool="Compress PDF" data-c="xml"><div class="icon-wrap bg-xml">I_COMPRESS</div><div class="tool-label">បង្រួម PDF</div><div class="tool-label-en">COMPRESS</div></div>
+      <div class="tool" data-tool="Convert PDF" data-c="xml"><div class="icon-wrap bg-xml">I_CONVERT</div><div class="tool-label">បម្លែងទូទៅ</div><div class="tool-label-en">CONVERT</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title"><span class="bar" style="background:var(--sign)"></span>កែសម្រួល &amp; ហត្ថលេខា</div>
+      <div class="section-sub">EDIT &amp; SIGN</div>
+    </div>
+    <div class="grid">
+      <div class="tool" data-tool="Sign PDF" data-c="sign"><div class="icon-wrap bg-sign">I_SIGN</div><div class="tool-label">ចុះហត្ថលេខា</div><div class="tool-label-en">SIGN</div></div>
+      <div class="tool" data-tool="Word to JPG" data-c="img"><div class="icon-wrap bg-img">I_IMG</div><div class="tool-label">Word ទៅ JPG</div><div class="tool-label-en">DOCX → JPG</div></div>
+      <div class="tool" data-tool="JPG to Word" data-c="word"><div class="icon-wrap bg-word">I_DOC</div><div class="tool-label">JPG ទៅ Word</div><div class="tool-label-en">JPG → DOCX</div></div>
+    </div>
+  </div>
+
+  <div class="demo-note">
+    <b>កំណត់សម្គាល់៖</b> នេះជា Demo UI ដែលបានផ្គុំចូលក្នុងផ្ទាំង Mini Apps របស់ K2-Construction រួចហើយ។ ចុចលើឧបករណ៍ណាមួយដើម្បីមើលគំរូអេក្រង់ជ្រើសរើសឯកសារ (មិនទាន់ភ្ជាប់ការបម្លែងឯកសារពិត)។
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title" id="sheetTitle">ជ្រើសរើសឯកសារ</div>
+      <div class="sheet-sub">DEMO — មិនទាន់ភ្ជាប់ការដំណើរការពិត</div>
+      <div class="drop">
+        <div id="sheetIcon"></div>
+        <button class="drop-btn" id="sheetBtn">ជ្រើសរើសឯកសារ</button>
+      </div>
+      <button class="sheet-close" onclick="document.getElementById('overlay').classList.remove('open')">បិទ</button>
+    </div>
+  </div>
+
+<script>
+  const ICONS = {
+    doc: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>`,
+    img: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5.5-5.5L9 17"/></svg>`,
+    merge: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3v8a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V3"/><path d="M12 13v8"/><path d="M9 19l3 3 3-3"/></svg>`,
+    split: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-8a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v8"/><path d="M12 11V3"/><path d="M9 6l3-3 3 3"/></svg>`,
+    compress: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V5a1 1 0 0 1 1-1h4M4 15v4a1 1 0 0 0 1 1h4M20 9V5a1 1 0 0 0-1-1h-4M20 15v4a1 1 0 0 1-1 1h-4"/></svg>`,
+    convert: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`,
+    sign: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17s2-1 4-1 3 1 5 1 3-2 5-2 4 1 4 1"/><path d="M6 13l9-9 3 3-9 9H6v-3z"/></svg>`
+  };
+  document.querySelectorAll('.icon-wrap').forEach(el=>{
+    const t = el.textContent.trim();
+    const map = {I_DOC:'doc', I_IMG:'img', I_MERGE:'merge', I_SPLIT:'split', I_COMPRESS:'compress', I_CONVERT:'convert', I_SIGN:'sign'};
+    if(map[t]) el.innerHTML = ICONS[map[t]];
+  });
+
+  const overlay = document.getElementById('overlay');
+  const sheetTitle = document.getElementById('sheetTitle');
+  const sheetIcon = document.getElementById('sheetIcon');
+  const sheetBtn = document.getElementById('sheetBtn');
+  const colorMap = {pdf:'#e0574a', word:'#4a7de0', excel:'#3aa66a', ppt:'#d99a3a', img:'#9a6cd0', xml:'#c9a23c', sign:'#c0507a'};
+
+  document.querySelectorAll('.tool').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      const name = t.getAttribute('data-tool');
+      const color = colorMap[t.getAttribute('data-c')] || '#e8621a';
+      sheetTitle.textContent = name;
+      sheetBtn.style.background = color;
+      sheetIcon.innerHTML = `<div style="width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto;background:${color}22;color:${color}">${ICONS.doc.replace('width="24" height="24"','width="28" height="28"')}</div>`;
+      overlay.classList.add('open');
+    });
+  });
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) overlay.classList.remove('open'); });
+</script>
+
+</body>
+</html>
