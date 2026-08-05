@@ -1,7 +1,9 @@
 {
   "name": "website-k2construction",
   "compatibility_date": "2026-07-21",
+  "main": "src/index.js",
   "assets": {
-    "directory": "./"
+    "directory": "./",
+    "binding": "ASSETS"
   }
 }
