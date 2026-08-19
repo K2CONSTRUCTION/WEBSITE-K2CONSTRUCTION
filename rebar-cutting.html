@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebar Cutting Optimizer</title>
+<style>
+  :root{
+    --bg:#111111;--card:#1e1e1e;--card-soft:#181818;
+    --orange:#e8621a;--orange-dark:#c94f0f;
+    --text:#f5f5f3;--text-dim:#a8a8a4;--line:#2b2b2b;
+    --blue:#4a7de0;--green:#3aa66a;--amber:#d99a3a;--red:#e0574a;
+    --font-body:'Inter',-apple-system,sans-serif;--font-mono:ui-monospace,'SF Mono',Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-body);line-height:1.5;padding:18px 14px 60px;}
+  .intro{margin-bottom:20px;}
+  .intro .eyebrow{color:var(--orange);text-transform:uppercase;letter-spacing:.14em;font-weight:700;font-size:.7rem;margin-bottom:6px;display:block;}
+  .intro h2{font-size:1.3rem;font-weight:800;margin-bottom:6px;}
+  .intro p{color:var(--text-dim);font-size:.84rem;max-width:600px;}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:18px;}
+  .card-head{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .icon-wrap{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
+  .card-title-wrap{flex:1;min-width:140px;}
+  .card-eyebrow{font-size:.65rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;}
+  .card-title{font-size:1.02rem;font-weight:800;}
+
+  .btn{display:inline-flex;align-items:center;gap:6px;border-radius:10px;padding:9px 14px;font-size:.78rem;font-weight:700;
+    border:1px solid var(--line);background:var(--card-soft);color:var(--text);cursor:pointer;transition:.15s;white-space:nowrap;}
+  .btn:hover{border-color:var(--orange);}
+  .btn:active{transform:scale(.96);}
+  .btn-primary{background:var(--orange);border-color:var(--orange);color:#fff;}
+  .btn-primary:hover{background:var(--orange-dark);}
+  .btn-blue{background:rgba(74,125,224,.12);border-color:rgba(74,125,224,.4);color:#7ea3f0;}
+  .btn-green{background:rgba(58,166,106,.12);border-color:rgba(58,166,106,.4);color:#5cc98a;}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+
+  table{width:100%;border-collapse:collapse;font-size:.78rem;}
+  th{text-align:left;color:var(--text-dim);font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;
+    padding:8px 6px;border-bottom:1px solid var(--line);}
+  td{padding:6px;border-bottom:1px solid var(--line);}
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  input[type=text],input[type=number],select{width:100%;background:var(--card-soft);border:1px solid var(--line);
+    color:var(--text);padding:7px 8px;border-radius:7px;font-size:.78rem;}
+  .del-btn{background:none;border:none;color:var(--red);font-size:1rem;cursor:pointer;padding:2px 6px;}
+
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+  .stat-box{background:var(--card-soft);border:1px solid var(--line);border-radius:12px;padding:14px;}
+  .stat-label{font-size:.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:6px;}
+  .stat-val{font-size:1.5rem;font-weight:800;font-family:var(--font-mono);}
+  .stat-unit{font-size:.7rem;color:var(--text-dim);font-weight:600;}
+
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+  .field label{display:block;font-size:.68rem;color:var(--text-dim);text-transform:uppercase;font-weight:700;margin-bottom:5px;}
+
+  .pattern-card{background:var(--card-soft);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;}
+  .pattern-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;}
+  .pattern-head h4{font-size:1rem;font-weight:800;}
+  .badge{background:rgba(74,125,224,.15);color:#7ea3f0;font-size:.68rem;font-weight:800;padding:3px 9px;border-radius:7px;}
+  .pattern-meta{color:var(--text-dim);font-size:.75rem;margin-bottom:10px;}
+  .pattern-count{display:inline-block;background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:6px 12px;font-size:.75rem;font-weight:700;color:var(--orange);margin-bottom:10px;}
+  .prow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);}
+  .prow:last-child{border-bottom:none;}
+  .p-id{width:34px;color:#7ea3f0;font-weight:800;font-size:.85rem;flex-shrink:0;}
+  .p-times{width:44px;font-weight:700;font-size:.85rem;flex-shrink:0;}
+  .p-bar{flex:1;min-width:0;}
+  .p-bar-track{display:flex;height:30px;border-radius:7px;overflow:hidden;background:var(--line);}
+  .p-seg{display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;color:#fff;overflow:hidden;white-space:nowrap;}
+  .p-seg.orange{background:var(--orange);}
+  .p-seg.green{background:var(--green);}
+  .p-seg.blue{background:var(--blue);}
+  .p-seg.rem{background:#3a3a3a;color:var(--text-dim);}
+  .p-detail{font-size:.68rem;color:var(--text-dim);margin-top:5px;}
+  .p-rem-val{width:66px;text-align:right;font-weight:800;color:var(--amber);font-size:.78rem;flex-shrink:0;}
+
+  .empty-note{color:var(--text-dim);font-size:.78rem;text-align:center;padding:20px;}
+  @media print{
+    .no-print{display:none!important;}
+    body{background:#fff;color:#000;padding:0;}
+    .card{border:1px solid #ccc;}
+  }
+</style>
+</head>
+<body>
+
+<div class="intro">
+  <span class="eyebrow">Mini Apps · Structural</span>
+  <h2>✂️ Rebar Cutting Optimizer</h2>
+  <p>បញ្ចូលបញ្ជីដែកដែលត្រូវកាត់ និងប្រវែងដែកដើម រួចប្រព័ន្ធនឹងគណនាផែនការកាត់ដែលខាតបង់តិចបំផុត (1D Cutting Stock Optimization)។</p>
+</div>
+
+<!-- REBAR INPUT -->
+<div class="card">
+  <div class="card-head">
+    <div class="icon-wrap" style="background:rgba(217,154,58,.15);color:var(--amber);">📥</div>
+    <div class="card-title-wrap">
+      <div class="card-eyebrow" style="color:var(--amber);">Rebar Input</div>
+      <div class="card-title">Bars to Cut</div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <label class="btn btn-blue">⬆ Import CSV<input type="file" id="importDemand" accept=".csv" style="display:none;"></label>
+    <button class="btn btn-green" onclick="exportCSV(demandRows(),'rebar_input.csv',['partition','no','dia','qty','barLength'])">⬇ Export</button>
+    <button class="btn btn-primary" onclick="addDemandRow()">＋ Add Rebar</button>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Partition</th><th>No.</th><th>Dia</th><th>Qty</th><th>Bar Length (mm)</th><th></th></tr></thead>
+      <tbody id="demandBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- STOCK INPUT -->
+<div class="card">
+  <div class="card-head">
+    <div class="icon-wrap" style="background:rgba(74,125,224,.15);color:var(--blue);">📦</div>
+    <div class="card-title-wrap">
+      <div class="card-eyebrow" style="color:var(--blue);">Stock Input</div>
+      <div class="card-title">Rebar Stock Input</div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <label class="btn btn-blue">⬆ Import CSV<input type="file" id="importStock" accept=".csv" style="display:none;"></label>
+    <button class="btn btn-green" onclick="exportCSV(stockRows(),'stock_input.csv',['dia','qty','stockLength'])">⬇ Export</button>
+    <button class="btn btn-primary" onclick="addStockRow()">＋ Add Stock</button>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Dia</th><th>Qty</th><th>Stock Length (mm)</th><th>Total (m)</th><th></th></tr></thead>
+      <tbody id="stockBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SETTINGS + OPTIMIZE -->
+<div class="card">
+  <div class="card-head">
+    <div class="icon-wrap" style="background:rgba(232,98,26,.15);color:var(--orange);">✂️</div>
+    <div class="card-title-wrap">
+      <div class="card-eyebrow" style="color:var(--orange);">Rebar Cutting</div>
+      <div class="card-title">12m Stock Optimizer</div>
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>Kerf (mm)</label><input type="number" id="kerfInput" value="0" min="0"></div>
+    <div class="field"><label>Min Reusable Remnant (mm)</label><input type="number" id="minRemInput" value="0" min="0"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="optimize()">🔄 Optimize</button>
+    <button class="btn btn-green" onclick="exportPlanCSV()">⬇ Export Plan CSV</button>
+    <button class="btn" onclick="window.print()">🖨 Print / PDF</button>
+    <button class="btn" onclick="clearAll()">🗑 Clear</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="card" id="resultsCard" style="display:none;">
+  <div class="card-title" style="margin-bottom:12px;">Cutting Status</div>
+  <div class="stat-grid">
+    <div class="stat-box"><div class="stat-label">Stock Used</div><div class="stat-val" id="statStockUsed">0/0</div><div class="stat-unit">bars</div></div>
+    <div class="stat-box"><div class="stat-label">Pieces Cut</div><div class="stat-val" id="statPieces">0/0</div><div class="stat-unit">pcs</div></div>
+    <div class="stat-box"><div class="stat-label">Efficiency</div><div class="stat-val" id="statEff" style="color:var(--green);">0%</div><div class="stat-unit">cut/stock</div></div>
+    <div class="stat-box"><div class="stat-label">Total Remnant</div><div class="stat-val" id="statRem" style="color:var(--amber);">0</div><div class="stat-unit">m</div></div>
+  </div>
+</div>
+
+<!-- STEEL USAGE SUMMARY -->
+<div class="card" id="summaryCard" style="display:none;">
+  <div class="card-head">
+    <div class="icon-wrap" style="background:rgba(58,166,106,.15);color:var(--green);">📈</div>
+    <div class="card-title-wrap">
+      <div class="card-eyebrow" style="color:var(--green);">Cutting Status</div>
+      <div class="card-title">Steel Usage Summary</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="stat-label">Available</div>
+      <div style="font-size:1.1rem;font-weight:800;color:var(--green);font-family:var(--font-mono);"><span id="sumAvailable">0</span> m</div>
+    </div>
+  </div>
+  <table>
+    <tr><td>Required Length</td><td style="text-align:right;color:#7ea3f0;font-weight:700;"><span id="sumRequired">0</span> m</td></tr>
+    <tr><td>Allocated Length</td><td style="text-align:right;color:var(--green);font-weight:700;"><span id="sumAllocated">0</span> m</td></tr>
+    <tr><td>Reusable Remnant</td><td style="text-align:right;color:var(--amber);font-weight:700;"><span id="sumReusable">0</span> m</td></tr>
+    <tr><td>Scrap (Below Min Rem)</td><td style="text-align:right;color:var(--red);font-weight:700;"><span id="sumScrap">0</span> m</td></tr>
+  </table>
+</div>
+
+<!-- CUTTING PLAN -->
+<div class="card" id="planCard" style="display:none;">
+  <div class="card-head">
+    <div class="icon-wrap" style="background:rgba(74,125,224,.15);color:var(--blue);">🔲</div>
+    <div class="card-title-wrap">
+      <div class="card-eyebrow" style="color:var(--blue);">DIA-Safe Cutting Plan</div>
+      <div class="card-title">Cutting Allocation by Stock Bar</div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <span class="btn" style="cursor:default;">USED: <b id="planUsed" style="margin-left:5px;">0 M</b></span>
+    <span class="btn" style="cursor:default;">REM: <b id="planRem" style="margin-left:5px;color:var(--amber);">0 M</b></span>
+    <button class="btn" onclick="window.print()">🖨 Print PDF</button>
+  </div>
+  <div id="planInner"></div>
+</div>
+
+<!-- REUSABLE REMNANTS -->
+<div class="card" id="remnantCard" style="display:none;">
+  <div class="card-head">
+    <div class="icon-wrap" style="background:rgba(217,154,58,.15);color:var(--amber);">♻️</div>
+    <div class="card-title-wrap">
+      <div class="card-title">Reusable Remnants</div>
+    </div>
+  </div>
+  <p style="font-size:.75rem;color:var(--text-dim);margin-bottom:12px;">Summary table of remnant bars reusable for future works (≥ min remnant threshold).</p>
+  <div class="btn-row">
+    <button class="btn btn-blue" onclick="addRemnantsToStock()">＋ Add to Stock Input</button>
+    <button class="btn btn-green" onclick="exportRemnantCSV()">⬇ Export CSV</button>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>DIA</th><th>Remnant (mm)</th><th>QTY</th></tr></thead>
+      <tbody id="remnantBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let demand = [
+  {partition:'PC1',no:1,dia:'DB10',qty:6,barLength:1976},
+  {partition:'PC1',no:2,dia:'DB10',qty:30,barLength:7850},
+  {partition:'PC1',no:3,dia:'DB12',qty:30,barLength:9530},
+  {partition:'PC1',no:4,dia:'DB12',qty:30,barLength:8500},
+  {partition:'PC1',no:5,dia:'DB12',qty:30,barLength:11500},
+  {partition:'PC2',no:6,dia:'DB14',qty:25,barLength:9530},
+  {partition:'PC2',no:7,dia:'DB14',qty:12,barLength:8500},
+  {partition:'PC2',no:8,dia:'DB14',qty:11,barLength:11500},
+];
+let stock = [
+  {dia:'DB10',qty:100,stockLength:12000},
+  {dia:'DB12',qty:100,stockLength:12000},
+  {dia:'DB14',qty:100,stockLength:12000},
+  {dia:'DB16',qty:100,stockLength:12000},
+];
+let lastPlan = null;
+const DIAS = ['DB10','DB12','DB14','DB16','DB18','DB20','DB22','DB25','DB28','DB32'];
+
+function diaSelect(val){
+  return `<select onchange="this.dataset.v=this.value">${DIAS.map(d=>`<option ${d===val?'selected':''}>${d}</option>`).join('')}</select>`;
+}
+
+function renderDemand(){
+  const body = document.getElementById('demandBody');
+  body.innerHTML = demand.map((r,i)=>`
+    <tr>
+      <td><input value="${r.partition}" onchange="demand[${i}].partition=this.value"></td>
+      <td><input type="number" value="${r.no}" style="width:60px" onchange="demand[${i}].no=+this.value"></td>
+      <td><select onchange="demand[${i}].dia=this.value">${DIAS.map(d=>`<option ${d===r.dia?'selected':''}>${d}</option>`).join('')}</select></td>
+      <td><input type="number" value="${r.qty}" style="width:60px" onchange="demand[${i}].qty=+this.value"></td>
+      <td><input type="number" value="${r.barLength}" onchange="demand[${i}].barLength=+this.value"></td>
+      <td><button class="del-btn" onclick="demand.splice(${i},1);renderDemand();">✕</button></td>
+    </tr>`).join('');
+}
+function renderStock(){
+  const body = document.getElementById('stockBody');
+  body.innerHTML = stock.map((r,i)=>`
+    <tr>
+      <td><select onchange="stock[${i}].dia=this.value">${DIAS.map(d=>`<option ${d===r.dia?'selected':''}>${d}</option>`).join('')}</select></td>
+      <td><input type="number" value="${r.qty}" style="width:70px" onchange="stock[${i}].qty=+this.value;renderStock();"></td>
+      <td><input type="number" value="${r.stockLength}" onchange="stock[${i}].stockLength=+this.value;renderStock();"></td>
+      <td style="color:var(--green);font-weight:700;">${((r.qty*r.stockLength)/1000).toLocaleString(undefined,{maximumFractionDigits:1})}</td>
+      <td><button class="del-btn" onclick="stock.splice(${i},1);renderStock();">✕</button></td>
+    </tr>`).join('');
+}
+function addDemandRow(){ demand.push({partition:'PC1',no:demand.length+1,dia:'DB10',qty:1,barLength:1000}); renderDemand(); }
+function addStockRow(){ stock.push({dia:'DB10',qty:100,stockLength:12000}); renderStock(); }
+function demandRows(){ return demand; }
+function stockRows(){ return stock; }
+function clearAll(){ demand=[]; stock=[]; renderDemand(); renderStock(); lastPlan=null; document.getElementById('resultsCard').style.display='none'; document.getElementById('summaryCard').style.display='none'; document.getElementById('planCard').style.display='none'; document.getElementById('planInner').innerHTML=''; document.getElementById('remnantCard').style.display='none'; }
+
+function exportCSV(rows, filename, cols){
+  const csv = [cols.join(',')].concat(rows.map(r=>cols.map(c=>r[c]).join(','))).join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; a.click();
+}
+document.getElementById('importDemand').addEventListener('change', e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ const lines=r.result.trim().split('\n').slice(1);
+    demand = lines.filter(l=>l.trim()).map(l=>{ const [partition,no,dia,qty,barLength]=l.split(','); return {partition,no:+no,dia,qty:+qty,barLength:+barLength}; });
+    renderDemand(); };
+  r.readAsText(f);
+});
+document.getElementById('importStock').addEventListener('change', e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ const lines=r.result.trim().split('\n').slice(1);
+    stock = lines.filter(l=>l.trim()).map(l=>{ const [dia,qty,stockLength]=l.split(','); return {dia,qty:+qty,stockLength:+stockLength}; });
+    renderStock(); };
+  r.readAsText(f);
+});
+
+// ---- Core FFD 1D cutting-stock optimizer ----
+function optimize(){
+  const kerf = +document.getElementById('kerfInput').value || 0;
+  const minRem = +document.getElementById('minRemInput').value || 0;
+
+  const diaGroups = {};
+  demand.forEach(r=>{ if(!r.dia||!r.qty||!r.barLength) return;
+    diaGroups[r.dia] = diaGroups[r.dia]||[];
+    for(let i=0;i<r.qty;i++) diaGroups[r.dia].push({len:r.barLength, no:r.no, partition:r.partition}); });
+
+  let totalStockUsed=0, totalStockAvail=0, totalPieces=0, totalPiecesCut=0;
+  let totalLenAllocated=0, totalLenUsedStock=0, totalRemnant=0, totalRequired=0, totalReusable=0;
+  const totalAvailableLen = stock.reduce((s,t)=>s+(t.qty*t.stockLength)/1000,0);
+  const planByDia = {};
+  const remnantSummary = {};
+
+  Object.keys(diaGroups).forEach(dia=>{
+    const stockTypes = stock.filter(s=>s.dia===dia).sort((a,b)=>b.stockLength-a.stockLength);
+    if(!stockTypes.length) return;
+    totalStockAvail += stockTypes.reduce((s,t)=>s+t.qty,0);
+
+    let pieces = diaGroups[dia].slice().sort((a,b)=>b.len-a.len);
+    totalPieces += pieces.length;
+    totalRequired += pieces.reduce((s,p)=>s+p.len,0)/1000;
+
+    const bins=[]; // {stockLength, pieces:[{len,no,partition},...]}
+    const typeUsed = {}; stockTypes.forEach(t=>typeUsed[t.stockLength]=0);
+
+    pieces.forEach(p=>{
+      let placed=false;
+      for(const b of bins){
+        const consumedIfAdded = b.pieces.reduce((s,x)=>s+x.len,0) + p.len + kerf*(b.pieces.length+1);
+        if(consumedIfAdded <= b.stockLength){ b.pieces.push(p); placed=true; break; }
+      }
+      if(!placed){
+        for(const t of stockTypes){
+          if(typeUsed[t.stockLength] < t.qty && (p.len+kerf) <= t.stockLength){
+            bins.push({stockLength:t.stockLength, pieces:[p]});
+            typeUsed[t.stockLength]++; placed=true; break;
+          }
+        }
+      }
+      if(placed) totalPiecesCut++;
+    });
+
+    totalStockUsed += bins.length;
+
+    // group bins into patterns by identical piece signature + stockLength
+    const patternMap = {};
+    bins.forEach(b=>{
+      const sorted = b.pieces.slice().sort((a,c)=>c.len-a.len);
+      const sig = b.stockLength+'|'+sorted.map(x=>x.no+':'+x.len).join(',');
+      if(!patternMap[sig]) patternMap[sig] = {stockLength:b.stockLength, pieces:sorted, times:0};
+      patternMap[sig].times++;
+    });
+    const patterns = Object.values(patternMap).sort((a,b)=>b.times-a.times);
+
+    patterns.forEach((pat,idx)=>{
+      pat.id = idx+1;
+      pat.partition = pat.pieces[0].partition;
+      const used = pat.pieces.reduce((s,x)=>s+x.len,0) + kerf*pat.pieces.length;
+      pat.remainder = pat.stockLength - used;
+      totalLenAllocated += (pat.pieces.reduce((s,x)=>s+x.len,0))*pat.times/1000;
+      totalLenUsedStock += pat.stockLength*pat.times/1000;
+      totalRemnant += (pat.remainder*pat.times)/1000;
+      if(pat.remainder >= minRem && pat.remainder > 0){
+        totalReusable += (pat.remainder*pat.times)/1000;
+        const key = dia+'|'+pat.remainder;
+        remnantSummary[key] = remnantSummary[key] || {dia, remainder:pat.remainder, qty:0};
+        remnantSummary[key].qty += pat.times;
+      }
+    });
+
+    const byLen = {};
+    patterns.forEach(p=>{ byLen[p.stockLength]=byLen[p.stockLength]||[]; byLen[p.stockLength].push(p); });
+    planByDia[dia] = byLen;
+  });
+
+  lastPlan = {planByDia, remnantSummary};
+
+  document.getElementById('resultsCard').style.display='';
+  document.getElementById('statStockUsed').textContent = `${totalStockUsed}/${totalStockAvail}`;
+  document.getElementById('statPieces').textContent = `${totalPiecesCut}/${totalPieces}`;
+  document.getElementById('statEff').textContent = totalLenUsedStock>0 ? ((totalLenAllocated/totalLenUsedStock)*100).toFixed(1)+'%' : '0%';
+  document.getElementById('statRem').textContent = totalRemnant.toFixed(2);
+
+  document.getElementById('summaryCard').style.display='';
+  document.getElementById('sumAvailable').textContent = totalAvailableLen.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('sumRequired').textContent = totalRequired.toFixed(2);
+  document.getElementById('sumAllocated').textContent = totalLenAllocated.toFixed(2);
+  document.getElementById('sumReusable').textContent = totalReusable.toFixed(2);
+  document.getElementById('sumScrap').textContent = (totalRemnant-totalReusable).toFixed(2);
+
+  document.getElementById('planUsed').textContent = totalLenUsedStock.toFixed(2)+' M';
+  document.getElementById('planRem').textContent = totalRemnant.toFixed(2)+' M';
+
+  renderPlan(planByDia);
+  renderRemnants(remnantSummary);
+}
+
+const segColors=['orange','green','blue'];
+function renderPlan(planByDia){
+  const inner = document.getElementById('planInner');
+  if(!Object.keys(planByDia).length){ inner.innerHTML=''; document.getElementById('planCard').style.display='none'; return; }
+  document.getElementById('planCard').style.display='';
+  let html='';
+  Object.keys(planByDia).forEach(dia=>{
+    Object.keys(planByDia[dia]).forEach(stockLength=>{
+      const patterns = planByDia[dia][stockLength];
+      const barsUsed = patterns.reduce((s,p)=>s+p.times,0);
+      html += `<div class="pattern-card">
+        <div class="pattern-head">
+          <h4>${dia} | Stock ${(stockLength/1000).toFixed(3)} m</h4>
+          <span class="badge">${patterns[0].partition||''}</span>
+        </div>
+        <div class="pattern-meta">${barsUsed} stock bars used | Kerf ${document.getElementById('kerfInput').value}mm</div>
+        <div class="pattern-count">${patterns.length} PATTERN${patterns.length>1?'S':''}</div>
+        <div class="tbl-wrap"><table><thead><tr><th>ID</th><th>Times</th><th>Graphic Allocation</th><th>Rem</th></tr></thead><tbody>`;
+      patterns.forEach(p=>{
+        const segs = p.pieces.map((pc,i)=>{
+          const pct = (pc.len/p.stockLength*100).toFixed(2);
+          return `<div class="p-seg ${segColors[i%3]}" style="width:${pct}%">${pc.no}:${pc.len}</div>`;
+        }).join('');
+        const remPct = (p.remainder/p.stockLength*100).toFixed(2);
+        const detail = p.pieces.map(pc=>`${pc.partition} No.${pc.no} L=${pc.len}`).join(' + ');
+        html += `<tr>
+          <td class="p-id">#${p.id}</td>
+          <td class="p-times">x${p.times}</td>
+          <td><div class="p-bar-track">${segs}<div class="p-seg rem" style="width:${remPct}%">REM</div></div>
+              <div class="p-detail">${detail}</div></td>
+          <td class="p-rem-val">${p.remainder}mm</td>
+        </tr>`;
+      });
+      html += `</tbody></table></div>`;
+    });
+  });
+  inner.innerHTML = html;
+}
+
+function renderRemnants(remnantSummary){
+  const rows = Object.values(remnantSummary).sort((a,b)=> a.dia.localeCompare(b.dia) || b.remainder-a.remainder);
+  const card = document.getElementById('remnantCard');
+  if(!rows.length){ card.style.display='none'; return; }
+  card.style.display='';
+  document.getElementById('remnantBody').innerHTML = rows.map(r=>`
+    <tr><td style="color:#7ea3f0;font-weight:700;">${r.dia}</td><td>${r.remainder}</td><td>x${r.qty}</td></tr>
+  `).join('');
+  lastPlan.remnantRows = rows;
+}
+function exportRemnantCSV(){
+  if(!lastPlan||!lastPlan.remnantRows) return;
+  exportCSV(lastPlan.remnantRows.map(r=>({dia:r.dia,remainder_mm:r.remainder,qty:r.qty})),'reusable_remnants.csv',['dia','remainder_mm','qty']);
+}
+function addRemnantsToStock(){
+  if(!lastPlan||!lastPlan.remnantRows) return;
+  lastPlan.remnantRows.forEach(r=>{ stock.push({dia:r.dia,qty:r.qty,stockLength:r.remainder}); });
+  renderStock();
+  alert('បានបន្ថែម Remnant ចូល Stock Input ជា stock ថ្មីរួចរាល់!');
+}
+function exportPlanCSV(){
+  if(!lastPlan) return;
+  const rows=[];
+  Object.keys(lastPlan.planByDia).forEach(dia=>{
+    Object.keys(lastPlan.planByDia[dia]).forEach(sl=>{
+      lastPlan.planByDia[dia][sl].forEach(p=>{
+        rows.push({dia, stock_length:sl, pattern_id:p.id, times:p.times, pieces:p.pieces.join('+'), remainder_mm:p.remainder});
+      });
+    });
+  });
+  exportCSV(rows,'cutting_plan.csv',['dia','stock_length','pattern_id','times','pieces','remainder_mm']);
+}
+
+renderDemand();
+renderStock();
+</script>
+</body>
+</html>
